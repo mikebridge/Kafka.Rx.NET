@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Reactive.Concurrency;
+using System.Reactive.Linq;
 using System.Threading;
+using Confluent.RestClient;
 using Confluent.RestClient.Model;
 using NUnit.Framework;
 
@@ -13,6 +15,7 @@ namespace Kafka.Rx.NET.Tests
         /// At the moment this just listens to the stream
         /// </summary>
         [Test]
+        [Category("Integration")]
         public void KafkaObservable_Should_Provide_An_Observable_Stream()
         {
             // Arrange
@@ -21,24 +24,18 @@ namespace Kafka.Rx.NET.Tests
             string topic = "rxtest";
             ConsumerInstance consumerInstance = null;
 
-            using (var client = RxConsumer.CreateConfluentClient("http://192.168.79.137:8082"))
+            using (var client = Setup.CreateConfluentClient("http://192.168.79.137:8082"))
             {
                 try
                 {
                     // in production this should be written without blocking.
-                    var consumerInstanceTask = RxConsumer.ConsumerInstance(client, instanceId, consumerGroupName).Result;
-                    if (!consumerInstanceTask.IsSuccess())
-                    {
-                        Assert.Fail("Error " + consumerInstanceTask.Error.ErrorCode + ": " +
-                                    consumerInstanceTask.Error.Message);
-                    }
-                    consumerInstance = consumerInstanceTask.Payload;
+                    consumerInstance = Setup.ConsumerInstance(client, instanceId, consumerGroupName);
                     var consumer = new RxConsumer(client, consumerInstance, topic);
 
                     // Act
                     var observable = consumer.GetRecordStream<String, RxConsumerTests.LogMessage>(
                         TimeSpan.FromSeconds(5), ThreadPoolScheduler.Instance)
-                        
+                        .Take(10)
                         .Subscribe(successResult =>
                         {
                             Console.WriteLine("Success: " + successResult.IsSuccess);
@@ -51,8 +48,9 @@ namespace Kafka.Rx.NET.Tests
                                 Console.WriteLine("ERROR: " + successResult.Exception.Message);
                             }
                         },
-                        () => Console.WriteLine("COMPLETED.") // not sure how to cancel this...
+                            () => Console.WriteLine("COMPLETED.") // not sure how to cancel this...
                         );
+
                     Thread.Sleep(15000);
                     Console.WriteLine("Disposing observer");
                     observable.Dispose();
@@ -63,37 +61,16 @@ namespace Kafka.Rx.NET.Tests
                     {
                         Console.WriteLine("Destroying instance");
                         client.DeleteConsumerAsync(consumerInstance);
-                    }                    
+                    }
                 }
             }
-            // Act
 
             // Assert
             //Assert.Fail("Not Implemented Yet");
 
         }
 
-        
-
-//        [Test]
-//        public void KafkaObservable_Should_Provide_An_Observable_Stream()
-//        {
-//            var conn = new RxConsumer("test", "test");
-//            ValueSourceAttribute messages = GetFakeKafkaMessages();
-//            var stream = conn.GetObservableStream(messages);
-//            var list = stream.ToBlocking
-//        }
-//
-//        private IEnumerable<MessageAndMetaData<byte[], byte[]>> GetFakeKafkaMessages(int numMessages)
-//        {
-//            return new IEnumerable<MessageAndMetaData<byte[], byte[]>>();
-////           val decoder = new DefaultDecoder()
-////    (0 to numMessages - 1) map { num =>
-////      val rawMessage = new kafka.message.Message(num.toString.getBytes)
-//      MessageAndMetadata(topic = num.toString, partition = num, offset = num.toLong, rawMessage = rawMessage, keyDecoder = decoder, valueDecoder = decoder)
-//    }
-//  }
-        }
-
     }
+
+}
 
