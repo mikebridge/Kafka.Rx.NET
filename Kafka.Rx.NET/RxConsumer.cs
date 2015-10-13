@@ -65,23 +65,22 @@ namespace Kafka.Rx.NET
         {
             return Observable.Create<Try<Record<K, V>>>(observer =>
             {
-                Console.WriteLine("Creating Observable");
                 return scheduler.ScheduleAsync(async (scheduler1, cancellationToken) =>
                 {
-                    Console.WriteLine("Schedule Async");
                     while (!cancellationToken.IsCancellationRequested)
                     {
+
                         try
                         {
-                            Console.WriteLine("Calling action");
+                            Console.Write(".");
                             var result = await consumerAction(_client, _consumerInstance, _topic);
-                            // TODO: check for exception
                             SendResultToObserver(result, observer);
                             
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("EXCEPTION!! " + ex.Message);
+                            // TODO: Write this to the observer via Try.
+                            Console.WriteLine("EXCEPTION: " + ex.Message);
                         }
                         await scheduler.Sleep(interval, cancellationToken);
                     }

@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace Kafka.Rx.NET.Tests
 {
     [TestFixture]
-    [Ignore("Requires a live Kafka server")]
+    //[Ignore("Requires a live Kafka server")]
     public class RxConsumerIntegrationTest
     {
         /// <summary>
@@ -25,7 +25,8 @@ namespace Kafka.Rx.NET.Tests
             string topic = "rxtest";
             ConsumerInstance consumerInstance = null;
 
-            using (var client = Setup.CreateConfluentClient("http://192.168.79.137:8082"))
+            using (var client = Setup.CreateConfluentClient("http://199.204.211.42:8082"))
+            //using (var client = Setup.CreateConfluentClient("http://192.168.79.137:8082"))
             {
                 try
                 {
