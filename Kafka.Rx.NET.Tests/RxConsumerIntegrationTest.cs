@@ -9,6 +9,7 @@ using NUnit.Framework;
 namespace Kafka.Rx.NET.Tests
 {
     [TestFixture]
+    [Ignore("Requires a live Kafka server")]
     public class RxConsumerIntegrationTest
     {
         /// <summary>

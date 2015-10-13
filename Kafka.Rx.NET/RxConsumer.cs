@@ -72,8 +72,8 @@ namespace Kafka.Rx.NET
                     while (!cancellationToken.IsCancellationRequested)
                     {
                         Console.WriteLine("Calling action");
-                        //var result = await ConsumeOnceAsync<K, V>(_client, _consumerInstance, _topic);
                         var result = await consumerAction(_client, _consumerInstance, _topic);
+                        // TODO: check for exception
                         SendResultToObserver(result, observer);
                         await scheduler.Sleep(interval, cancellationToken);
                     }
@@ -102,6 +102,7 @@ namespace Kafka.Rx.NET
             }
             else
             {
+                Console.WriteLine("Got an error: " + result.Error.Message);
                 observer.OnNext(
                     new Failure<Record<K, V>>(
                         new Exception(result.Error.ErrorCode + ": " + result.Error.Message)));

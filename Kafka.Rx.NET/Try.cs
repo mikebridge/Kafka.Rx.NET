@@ -39,9 +39,9 @@ namespace Kafka.Rx.NET
 
         public override T Value { get { throw new InvalidOperationException("This has no value"); } }
 
-        public override bool IsSuccess { get { return true; } }
+        public override bool IsSuccess { get { return false; } }
 
-        public override bool IsFailure { get { return false; } }
+        public override bool IsFailure { get { return true; } }
     }
 
 
