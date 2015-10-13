@@ -6,6 +6,16 @@ This project shows how to listen to a stream of events from Kafka to C#, using I
 
 1) All four parts of the the [Confluent Platform](http://docs.confluent.io/1.0.1/) need to be up and running: Zookeeper, Kafka, the Schema Registry and the Rest Client.  I'm running them on a Linux virtual machine, and I didn't need to do any configuration.
 
+In four different consoles, run these commands:
+```bash
+$ sudo zookeeper-server-start /etc/kafka/zookeeper.properties
+
+$ sudo kafka-server-start /etc/kafka/server.propertie
+
+$ sudo schema-registry-start /etc/schema-registry/schema-registry.properties
+
+$ kafka-rest-start
+```
 2) The examples here require the [Confluent Rest Client](https://github.com/josephjeganathan/Confluent.RestClient), which is installed via NuGet.
 
 ## Connection
