@@ -123,3 +123,10 @@ curl -i -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" --data '{ 
 "records": [ {"value": {"message": "Hello From Linux #1"}},{"value": {"message": "Hello From Linux #2"}}]}' http://localhost:8082/topics/rxtest
 ```
 
+## Unit Testing
+
+The observable can be unit tested using the `TestScheduler` from the  [`Microsoft.Reactive.Testing`](https://www.nuget.org/packages/Rx-Testing/) library.  In production we would schedule the API calls using `ThreadPoolScheduler.Instance`, but we can simulate clock ticks using the `TestScheduler`.
+
+[RxConsumerTests.cs](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/Kafka.Rx.NET.Tests/RxConsumerTests.cs) makes use of `TestScheduler.AdvanceBy(...)` to simulate the passage of time, and to keep our unit tests quick and deterministic.
+
+
