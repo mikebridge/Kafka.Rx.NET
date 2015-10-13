@@ -116,7 +116,7 @@ If you are shutting down the client, you need to deregister it with the server:
 
 ## Console stream listener
 
-The console listener is `Kafka.Rx.NET.Console.exe`.  You can run it with no arguments to see the a list of command-line arguments.
+The console listener is `Kafka.Rx.NET.Console.exe`.  You can run it with no arguments to see the a list of command-line arguments.  (The demo console listener is listening specifically for a LogMessage Avro message.)
 
 This example will create a consumer with instanceid "0" in the group "mytestgroup", listening to "mytopic".  By default it polls, then waits 500ms before repeating.
 
@@ -126,7 +126,7 @@ This example will create a consumer with instanceid "0" in the group "mytestgrou
 
 ## Add an Event to the Stream
 
-This will add two events to the "rxtest" topic.  The two messages should appear in the console listener.
+This will add two "LogMessage" events to the "rxtest" topic.  The two messages should appear in the console listener.
 
 ```bash
 curl -i -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" --data '{ "value_schema": "{\"type\": \"record\", \"name\": \"LogMessage\", \"fields\": [{\"name\": \"message\", \"type\": \"string\"}]}", 
@@ -139,4 +139,7 @@ The observable can be unit tested using the `TestScheduler` from the  [`Microsof
 
 [RxConsumerTests.cs](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/Kafka.Rx.NET.Tests/RxConsumerTests.cs) makes use of `TestScheduler.AdvanceBy(...)` to simulate the passage of time, and to keep our unit tests quick and deterministic.
 
+## TODO
 
+- Add different commit strategies
+- Produce events via observable
