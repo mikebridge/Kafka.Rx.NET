@@ -99,5 +99,9 @@ If you are shutting down the client, you should also deregister it with the serv
     client.DeleteConsumerAsync(consumerInstance)
 ```
 
-
+##  DEMO
+```bash
+curl -i -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" --data '{ "value_schema": "{\"type\": \"record\", \"name\": \"LogMessage\", \"fields\": [{\"name\": \"message\", \"type\": \"string\"}]}", 
+"records": [ {"value": {"message": "Hello From Linux #1"}},{"value": {"message": "Hello From Linux #2"}}]}' http://localhost:8082/topics/rxtest
+```
 

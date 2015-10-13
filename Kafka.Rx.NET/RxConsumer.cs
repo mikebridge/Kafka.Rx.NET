@@ -71,10 +71,18 @@ namespace Kafka.Rx.NET
                     Console.WriteLine("Schedule Async");
                     while (!cancellationToken.IsCancellationRequested)
                     {
-                        Console.WriteLine("Calling action");
-                        var result = await consumerAction(_client, _consumerInstance, _topic);
-                        // TODO: check for exception
-                        SendResultToObserver(result, observer);
+                        try
+                        {
+                            Console.WriteLine("Calling action");
+                            var result = await consumerAction(_client, _consumerInstance, _topic);
+                            // TODO: check for exception
+                            SendResultToObserver(result, observer);
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("EXCEPTION!! " + ex.Message);
+                        }
                         await scheduler.Sleep(interval, cancellationToken);
                     }
                    

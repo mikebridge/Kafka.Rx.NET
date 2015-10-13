@@ -14,7 +14,7 @@ namespace Kafka.Rx.NET.Tests
     [TestFixture]
     public class RxConsumerTests
     {
-        private const int TestSchedulerTickInterval = 1; // 
+        private const int TestSchedulerTickInterval = 1;
         private int _offset;
 
         [SetUp]
@@ -71,6 +71,39 @@ namespace Kafka.Rx.NET.Tests
             Assert.That(exceptions, Has.Count.EqualTo(2));
             Assert.That(heardMessages, Has.Count.EqualTo(0));
 
+        }
+
+        [Test]
+        public void It_Should_Process_An_Exception_As_An_Error()
+        {
+            // Arrange
+            var scheduler = new TestScheduler();
+            var heardMessages = new List<LogMessage>();
+            var exceptions = new List<Exception>();
+
+            var subscription = CreateSubscription(
+                scheduler,
+                MockExceptionTask("Test Exception"),
+                msg => heardMessages.Add(msg),
+                ex => exceptions.Add(ex));
+
+            // Act
+            scheduler.AdvanceBy(TestSchedulerTickInterval);
+            scheduler.AdvanceBy(TestSchedulerTickInterval);
+            subscription.Dispose();
+
+            // Assert
+            Assert.That(exceptions, Has.Count.EqualTo(2));
+            Assert.That(heardMessages, Has.Count.EqualTo(0));
+
+        }
+
+        private Func<IConfluentClient, ConsumerInstance, string, Task<ConfluentResponse<List<AvroMessage<string, LogMessage>>>>> MockExceptionTask(string testException)
+        {
+            return (_1, _2, _3) =>
+            {
+                throw new Exception(testException);
+            };
         }
 
 
