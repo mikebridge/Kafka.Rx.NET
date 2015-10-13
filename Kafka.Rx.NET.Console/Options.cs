@@ -19,7 +19,7 @@ namespace Kafka.Rx.NET.Console
         [Option('t', "topic", Required = true, HelpText = "The Topic")]
         public string Topic { get; set; }
 
-        [Option('s', "sleep", HelpText = "Sleep time between api calls in milliseconds", DefaultValue = 5000)]
+        [Option('s', "sleep", HelpText = "Sleep time between api calls in milliseconds", DefaultValue = 500)]
         public int Sleep { get; set; }
 
         [ParserState]

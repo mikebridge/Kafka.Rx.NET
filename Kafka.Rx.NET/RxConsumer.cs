@@ -73,7 +73,7 @@ namespace Kafka.Rx.NET
                         try
                         {
                             Console.Write(".");
-                            var result = await consumerAction(_client, _consumerInstance, _topic);
+                            var result = await consumerAction(_client, _consumerInstance, _topic).;
                             SendResultToObserver(result, observer);
                             
                         }
@@ -81,6 +81,7 @@ namespace Kafka.Rx.NET
                         {
                             // TODO: Write this to the observer via Try.
                             Console.WriteLine("EXCEPTION: " + ex.Message);
+                            SendExceptionToObserver(ex, observer);
                         }
                         await scheduler.Sleep(interval, cancellationToken);
                     }
@@ -90,6 +91,15 @@ namespace Kafka.Rx.NET
                 });
 
             });
+        }
+
+        private static void SendExceptionToObserver<K, V>(
+            Exception ex,
+            IObserver<Try<Record<K, V>>> observer)
+            where K : class
+            where V : class
+        {
+            observer.OnNext(new Failure<Record<K, V>>(ex));
         }
 
         private static void SendResultToObserver<K, V>(
