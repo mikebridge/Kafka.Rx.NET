@@ -1,6 +1,6 @@
 # C# to Kafka via Rx
 
-This project demonstrates how to listen to a stream of events from Kafka to C#, using IObservables.
+This project demonstrates how to listen to a continuous stream of Kafka events from C#/.Net, using IObservables.
 
 ## Requirements:
 
