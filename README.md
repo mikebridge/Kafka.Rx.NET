@@ -114,6 +114,16 @@ If you are shutting down the client, you need to deregister it with the server:
     client.DeleteConsumerAsync(consumerInstance)
 ```
 
+## DEMO: Console stream listener
+
+The console listener is `Kafka.Rx.NET.Console.exe`.  You can run it with no arguments to see the a list of command-line arguments.
+
+This example will create a consumer with instanceid "0" in the group "mytestgroup", listening to "mytopic".
+
+```cmd
+> Kafka.Rx.NET.Console.exe -u http://myhost:8082 -i 0 -g mytestgroup -t mytopic
+```
+
 ## Add an Event to the Stream
 
 This will add two events to the "rxtest" topic.  If you run `RxConsumerIntegrationTest`, you should see them appear in the stream.  (TODO: this should be console app).
