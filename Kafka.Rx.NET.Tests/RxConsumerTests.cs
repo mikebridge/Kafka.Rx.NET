@@ -66,7 +66,7 @@ namespace Kafka.Rx.NET.Tests
             scheduler.AdvanceBy(TestSchedulerTickInterval);
             scheduler.AdvanceBy(TestSchedulerTickInterval);
             subscription.Dispose();
-
+            
             // Assert
             Assert.That(exceptions, Has.Count.EqualTo(2));
             Assert.That(heardMessages, Has.Count.EqualTo(0));
@@ -100,10 +100,7 @@ namespace Kafka.Rx.NET.Tests
 
         private Func<IConfluentClient, ConsumerInstance, string, Task<ConfluentResponse<List<AvroMessage<string, LogMessage>>>>> MockExceptionTask(string testException)
         {
-            return (_1, _2, _3) =>
-            {
-                throw new Exception(testException);
-            };
+            return (_1, _2, _3) => { throw new Exception(testException); };
         }
 
 
@@ -114,7 +111,11 @@ namespace Kafka.Rx.NET.Tests
             Action<Exception> onException)
         {
             var consumer = new RxConsumer(new Mock<IConfluentClient>().Object, new ConsumerInstance(), "testStream");
-            var observable = consumer.GetRecordStream(getPayload, TimeSpan.FromTicks(TestSchedulerTickInterval), scheduler);
+            var observable = consumer.GetRecordStream(
+                getPayload, 
+                TimeSpan.FromTicks(TestSchedulerTickInterval), 
+                scheduler,
+                () => { });
 
             var subscription = observable.Subscribe(
                 successResult =>

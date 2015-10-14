@@ -26,15 +26,20 @@ namespace Kafka.Rx.NET
             _topic = topic;
         }
        
-
-        private async Task<ConfluentResponse<List<AvroMessage<K, V>>>> ConsumeOnceAsync<K, V>(
+        /// <summary>
+        /// This assumes that a topic has only one type.  Jay Kreps recommends separating different event types 
+        /// into different topics at http://www.confluent.io/blog/stream-data-platform-2/.  Besides, heterogeneous-event 
+        /// topics aren't directly supported by the driver.
+        /// </summary>
+        /// <returns></returns>
+        private static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsync<TK, TV>(
             IConfluentClient confluentClient,
             ConsumerInstance consumerInstance,
             string topic)
-            where K : class
-            where V : class
+            where TK : class
+            where TV : class
         {
-            return await confluentClient.ConsumeAsAvroAsync<K, V>(consumerInstance, topic);
+            return await confluentClient.ConsumeAsAvroAsync<TK, TV>(consumerInstance, topic);
         }
 
         /// <summary>
@@ -45,68 +50,70 @@ namespace Kafka.Rx.NET
         /// See: http://stackoverflow.com/questions/19547880/how-to-implement-polling-using-observables
         /// </summary>
         /// <returns></returns>
-        public IObservable<Try<Record<K, V>>> GetRecordStream<K, V>(
+        public IObservable<Try<Record<TK, TV>>> GetRecordStream<TK, TV>(
             TimeSpan interval,
-            IScheduler scheduler)
-            where K : class
-            where V : class
+            IScheduler scheduler,
+            Action beforeCallAction = null
+            )
+            where TK : class
+            where TV : class
         {
-            return GetRecordStream(ConsumeOnceAsync<K, V>, interval, scheduler);
+            return GetRecordStream(ConsumeOnceAsync<TK, TV>, interval, scheduler, beforeCallAction);
         }
 
 
 
-        public IObservable<Try<Record<K, V>>> GetRecordStream<K, V>(
-            Func<IConfluentClient, ConsumerInstance, String, Task<ConfluentResponse<List<AvroMessage<K, V>>>>> consumerAction,
+        public IObservable<Try<Record<TK, TV>>> GetRecordStream<TK, TV>(
+            Func<IConfluentClient, ConsumerInstance, String, Task<ConfluentResponse<List<AvroMessage<TK, TV>>>>> consumerAction,
             TimeSpan interval,
-            IScheduler scheduler)
-            where K : class
-            where V : class
+            IScheduler scheduler,
+            Action beforeCallAction = null)
+            where TK : class
+            where TV : class
         {
-            return Observable.Create<Try<Record<K, V>>>(observer =>
+            return Observable.Create<Try<Record<TK, TV>>>(observer =>
             {
+                beforeCallAction = beforeCallAction ?? (() => { });
+
                 return scheduler.ScheduleAsync(async (scheduler1, cancellationToken) =>
                 {
                     while (!cancellationToken.IsCancellationRequested)
                     {
-
+                        beforeCallAction();
                         try
                         {
-                            Console.Write(".");
-                            var result = await consumerAction(_client, _consumerInstance, _topic).;
-                            SendResultToObserver(result, observer);
+                            SendResultToObserver(await consumerAction(_client, _consumerInstance, _topic), observer);
                             
                         }
                         catch (Exception ex)
                         {
-                            // TODO: Write this to the observer via Try.
+                            // TODO: Write this to the observer via Try,
+                            // but differentiate between fatal and non-fatal messages.
                             Console.WriteLine("EXCEPTION: " + ex.Message);
                             SendExceptionToObserver(ex, observer);
                         }
                         await scheduler.Sleep(interval, cancellationToken);
                     }
-                   
-                    
 
                 });
 
             });
         }
 
-        private static void SendExceptionToObserver<K, V>(
+        private static void SendExceptionToObserver<TK, TV>(
             Exception ex,
-            IObserver<Try<Record<K, V>>> observer)
-            where K : class
-            where V : class
+            IObserver<Try<Record<TK, TV>>> observer)
+            where TK : class
+            where TV : class
         {
-            observer.OnNext(new Failure<Record<K, V>>(ex));
+            observer.OnNext(new Failure<Record<TK, TV>>(ex));
         }
 
-        private static void SendResultToObserver<K, V>(
-            ConfluentResponse<List<AvroMessage<K, V>>> result, 
-            IObserver<Try<Record<K, V>>> observer) 
-            where K : class
-            where V : class
+        private static void SendResultToObserver<TK, TV>(
+            ConfluentResponse<List<AvroMessage<TK, TV>>> result, 
+            IObserver<Try<Record<TK, TV>>> observer) 
+            where TK : class
+            where TV : class
         {
             if (result.IsSuccess())
             {
@@ -114,14 +121,13 @@ namespace Kafka.Rx.NET
                 foreach (var record in result.Payload)
                 {
                     Console.WriteLine("Sending "+record.Value+" to observer");
-                    observer.OnNext(new Success<Record<K, V>>(new Record<K, V>(record.Key, record.Value)));
+                    observer.OnNext(new Success<Record<TK, TV>>(new Record<TK, TV>(record.Key, record.Value)));
                 }
             }
             else
             {
                 Console.WriteLine("Got an error: " + result.Error.Message);
-                observer.OnNext(
-                    new Failure<Record<K, V>>(
+                observer.OnNext(new Failure<Record<TK, TV>>(
                         new Exception(result.Error.ErrorCode + ": " + result.Error.Message)));
             }
         }
