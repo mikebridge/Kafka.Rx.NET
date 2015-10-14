@@ -10,9 +10,9 @@ In four different consoles, run these commands:
 ```bash
 $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
 
-$ ./bin/kafka-server-start ./etc/kafka/server.propertie
-
 $ ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
+
+$ ./bin/kafka-server-start ./etc/kafka/server.properties
 
 $ ./bin/kafka-rest-start
 ```
@@ -129,8 +129,7 @@ This example will create a consumer with instanceid "0" in the group "mytestgrou
 This will add two "LogMessage" events to the "rxtest" topic.  The two messages should appear in the console listener.
 
 ```bash
-curl -i -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" --data '{ "value_schema": "{\"type\": \"record\", \"name\": \"LogMessage\", \"fields\": [{\"name\": \"message\", \"type\": \"string\"}]}", 
-"records": [ {"value": {"message": "Hello #1"}},{"value": {"message": "Hello #2"}}]}' http://localhost:8082/topics/rxtest
+curl -i -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" --data '{ "value_schema": "{\"type\": \"record\", \"name\": \"LogMessage\", \"fields\": [{\"name\": \"message\", \"type\": \"string\"}]}", "records": [ {"value": {"message": "Hello #1"}},{"value": {"message": "Hello #2"}}]}' http://localhost:8082/topics/rxtest
 ```
 
 ## Unit Testing
