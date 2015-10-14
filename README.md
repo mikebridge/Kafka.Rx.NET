@@ -142,3 +142,4 @@ The observable can be unit tested using the `TestScheduler` from the  [`Microsof
 
 - Add different commit strategies
 - Produce events via observable
+- Handle broker leader changes / find leader
