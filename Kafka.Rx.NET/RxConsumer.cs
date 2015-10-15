@@ -8,7 +8,19 @@ using Confluent.RestClient.Model;
 
 namespace Kafka.Rx.NET
 {
-    // each RxConsumer is associated with an Consumer Instance for a particualr Consumer Group.
+    /// <summary>
+    /// Each RxConsumer is associated with an Consumer Instance for a particular Consumer Group.
+    /// 
+    /// The TV generic type refers to the ONE type that will be found within the topic.  Jay Kreps recommends separating 
+    /// different event types into different topics at http://www.confluent.io/blog/stream-data-platform-2/,
+    /// so this follows that advice.  Heterogeneous-event topics aren't directly supported by the driver
+    /// anyway.
+    /// </summary>
+    /// <typeparam name="TK"></typeparam>
+    /// <typeparam name="TV"></typeparam>
+ 
+
+    
     public class RxConsumer<TK, TV>
         where TK : class
         where TV : class
@@ -29,9 +41,7 @@ namespace Kafka.Rx.NET
         }
        
         /// <summary>
-        /// This assumes that a topic has only one type.  Jay Kreps recommends separating different event types 
-        /// into different topics at http://www.confluent.io/blog/stream-data-platform-2/.  Besides, heterogeneous-event 
-        /// topics aren't directly supported by the driver.
+
         /// </summary>
         /// <returns></returns>
         private static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsync(
