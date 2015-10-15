@@ -22,7 +22,7 @@ $ ./bin/kafka-rest-start
 
 # Create an RX Observable
 
-Once you have a client and a consumerInstance, you can subscribe to a topic.  The observable operates as a non-blocking infinte loop, waking up the thread every so often to poll the API.  You can specify the `interval` as a TimeSpan.
+Once you have a [client and a consumerInstance](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/README.md#use-confluentrestclient-to-create-a-client--consumer), you can subscribe to a topic.  The observable operates as a non-blocking infinte loop, waking up the thread every so often to poll the API.  You can specify the `interval` as a TimeSpan.
 
 In this case, we don't want the IObservable to terminate if an error occurs, so the RxConsumer will return a [Try](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/Kafka.Rx.NET/Try.cs) as the payload.  This means you will either receive an Exception wrapped in a Failure (which subclasses Try) or the expected result wrapped in a Success (which also subclasses Try).  
 
@@ -82,7 +82,7 @@ The observable can be unit tested using the `TestScheduler` from the  [`Microsof
 [RxConsumerTests.cs](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/Kafka.Rx.NET.Tests/RxConsumerTests.cs) makes use of `TestScheduler.AdvanceBy(...)` to simulate the passage of time, and to keep our unit tests quick and deterministic.
 
 
-## Use Confluent.RestClient to create a Client & Consumer
+## Appendix: Use Confluent.RestClient to create a Client & Consumer
 
 To connect via the Confluent.RestClient , you have to create an [`IConfluentClient`](https://github.com/josephjeganathan/Confluent.RestClient/blob/master/src/Confluent.RestClient/IConfluentClient.cs), then use that client to request a [`ConsumerInstance`](https://github.com/josephjeganathan/Confluent.RestClient/blob/master/src/Confluent.RestClient/Model/ConsumerInstance.cs).  (The confluent [REST API documentation](http://confluent.io/docs/current/kafka-rest/docs/index.html) has some more information on creating a client and consumer.)  An example of creating a client:
 
