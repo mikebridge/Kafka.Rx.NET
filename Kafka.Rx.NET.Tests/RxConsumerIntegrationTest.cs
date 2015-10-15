@@ -8,15 +8,15 @@ using NUnit.Framework;
 
 namespace Kafka.Rx.NET.Tests
 {
-    [TestFixture]
+    //[TestFixture]
     //[Ignore("Requires a live Kafka server")]
     public class RxConsumerIntegrationTest
     {
         /// <summary>
         /// At the moment this just listens to the stream
         /// </summary>
-        [Test]
-        [Category("Integration")]
+        //[Test]
+        //[Category("Integration")]
         public void KafkaObservable_Should_Provide_An_Observable_Stream()
         {
             // Arrange
@@ -32,10 +32,10 @@ namespace Kafka.Rx.NET.Tests
                 {
                     // in production this should be written without blocking.
                     consumerInstance = Setup.ConsumerInstance(client, instanceId, consumerGroupName);
-                    var consumer = new RxConsumer(client, consumerInstance, topic);
+                    var consumer = new RxConsumer<String, RxConsumerTests.LogMessage>(client, consumerInstance, topic);
 
                     // Act
-                    var observable = consumer.GetRecordStream<String, RxConsumerTests.LogMessage>(
+                    var observable = consumer.GetRecordStream(
                         TimeSpan.FromSeconds(5), ThreadPoolScheduler.Instance)
                         .Take(10)
                         .Subscribe(successResult =>

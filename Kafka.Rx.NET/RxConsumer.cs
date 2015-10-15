@@ -9,7 +9,9 @@ using Confluent.RestClient.Model;
 namespace Kafka.Rx.NET
 {
     // each RxConsumer is associated with an Consumer Instance for a particualr Consumer Group.
-    public class RxConsumer
+    public class RxConsumer<TK, TV>
+        where TK : class
+        where TV : class
     {
         private readonly ConsumerInstance _consumerInstance;
 
@@ -32,12 +34,11 @@ namespace Kafka.Rx.NET
         /// topics aren't directly supported by the driver.
         /// </summary>
         /// <returns></returns>
-        private static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsync<TK, TV>(
+        private static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsync(
             IConfluentClient confluentClient,
             ConsumerInstance consumerInstance,
             string topic)
-            where TK : class
-            where TV : class
+ 
         {
             return await confluentClient.ConsumeAsAvroAsync<TK, TV>(consumerInstance, topic);
         }
@@ -50,26 +51,22 @@ namespace Kafka.Rx.NET
         /// See: http://stackoverflow.com/questions/19547880/how-to-implement-polling-using-observables
         /// </summary>
         /// <returns></returns>
-        public IObservable<Try<Record<TK, TV>>> GetRecordStream<TK, TV>(
+        public IObservable<Try<Record<TK, TV>>> GetRecordStream(
             TimeSpan interval,
             IScheduler scheduler,
             Action beforeCallAction = null
             )
-            where TK : class
-            where TV : class
         {
-            return GetRecordStream(ConsumeOnceAsync<TK, TV>, interval, scheduler, beforeCallAction);
+            return GetRecordStream(ConsumeOnceAsync, interval, scheduler, beforeCallAction);
         }
 
 
 
-        public IObservable<Try<Record<TK, TV>>> GetRecordStream<TK, TV>(
+        public IObservable<Try<Record<TK, TV>>> GetRecordStream(
             Func<IConfluentClient, ConsumerInstance, String, Task<ConfluentResponse<List<AvroMessage<TK, TV>>>>> consumerAction,
             TimeSpan interval,
             IScheduler scheduler,
             Action beforeCallAction = null)
-            where TK : class
-            where TV : class
         {
             return Observable.Create<Try<Record<TK, TV>>>(observer =>
             {

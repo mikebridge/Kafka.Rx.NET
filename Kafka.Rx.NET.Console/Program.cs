@@ -55,10 +55,10 @@ namespace Kafka.Rx.NET.Console
                 {
                     // in production this should be written without blocking.
                     consumerInstance = Setup.ConsumerInstance(client, instanceId, consumerGroupName);
-                    var consumer = new RxConsumer(client, consumerInstance, topic);
+                    var consumer = new RxConsumer<String, LogMessage>(client, consumerInstance, topic);
 
                     // Act
-                    var observable = consumer.GetRecordStream<String, LogMessage>(
+                    var observable = consumer.GetRecordStream(
                             TimeSpan.FromMilliseconds(options.Sleep), 
                             ThreadPoolScheduler.Instance,
                             beforeCallAction: () => Log("."))

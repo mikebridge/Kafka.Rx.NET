@@ -110,7 +110,7 @@ namespace Kafka.Rx.NET.Tests
             Action<LogMessage> onSuccess,
             Action<Exception> onException)
         {
-            var consumer = new RxConsumer(new Mock<IConfluentClient>().Object, new ConsumerInstance(), "testStream");
+            var consumer = new RxConsumer<String, LogMessage>(new Mock<IConfluentClient>().Object, new ConsumerInstance(), "testStream");
             var observable = consumer.GetRecordStream(
                 getPayload, 
                 TimeSpan.FromTicks(TestSchedulerTickInterval), 
