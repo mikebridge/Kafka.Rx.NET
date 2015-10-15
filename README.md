@@ -22,7 +22,7 @@ $ ./bin/kafka-rest-start
 
 # Create an RX Observable
 
-Once you have a [client and a consumerInstance](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/README.md#use-confluentrestclient-to-create-a-client--consumer), you can subscribe to a topic.  The observable operates as a non-blocking infinte loop, waking up the thread every so often to poll the API.  You can specify the `interval` as a TimeSpan.
+Once you have a [client and a consumerInstance](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/README.md#appendix-use-confluentrestclient-to-create-a-client--consumer), you can subscribe to a topic.  The observable operates as a non-blocking infinte loop, waking up the thread every so often to poll the API.  You can specify the `interval` as a TimeSpan.
 
 In this case, we don't want the IObservable to terminate if an error occurs, so the RxConsumer will return a [Try](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/Kafka.Rx.NET/Try.cs) as the payload.  This means you will either receive an Exception wrapped in a Failure (which subclasses Try) or the expected result wrapped in a Success (which also subclasses Try).  
 
