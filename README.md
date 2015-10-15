@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/2qudhjt1jmrb0je0?svg=true)](https://ci.appveyor.com/project/mikebridge/kafka-rx-net)
+
 # C# to Kafka via Rx
 
 This project demonstrates how to listen to a continuous stream of Kafka events from C#/.Net, using IObservables.
