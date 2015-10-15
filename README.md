@@ -20,65 +20,6 @@ $ ./bin/kafka-rest-start
 ```
 2) The examples here require the [Confluent Rest Client](https://github.com/josephjeganathan/Confluent.RestClient), which is installed via NuGet.
 
-## Use Confluent.RestClient to create a Client & Consumer
-
-To connect via the Confluent.RestClient , you have to create an [`IConfluentClient`](https://github.com/josephjeganathan/Confluent.RestClient/blob/master/src/Confluent.RestClient/IConfluentClient.cs), then use that client to request a [`ConsumerInstance`](https://github.com/josephjeganathan/Confluent.RestClient/blob/master/src/Confluent.RestClient/Model/ConsumerInstance.cs).  (The confluent [REST API documentation](http://confluent.io/docs/current/kafka-rest/docs/index.html) has some more information on creating a client and consumer.)  An example of creating a client:
-
-```C#
-public class KafkaClientSettings : IConfluentClientSettings
-{
-    public string KafkaBaseUrl { get; set; }
-}
-
-public static IConfluentClient CreateConfluentClient(String baseUrl)
-{
-    var settings = new KafkaClientSettings
-    {
-        KafkaBaseUrl = baseUrl
-    };
-    return new ConfluentClient(settings);
-}
-
-///...
-var client = CreateConfluentClient("http://192.168.1.2:8082");
-
-```
-
-The client can then be used to create a ConsumerInstance via a CreateConsumerRequest.  The creation request can specify a Consumer Group, and an Instance Id within that group.  Each Consumer group will receive a copy of every message, but only one Instance within each group will process that message [Ref](http://kafka.apache.org/documentation.html#intro_consumers).
-
-A consumer instance can be created like this:
-
-```C#
-public static async Task<ConfluentResponse<ConsumerInstance>> CreateConsumerInstance(
-    IConfluentClient client,
-    string instanceId,
-    string consumerGroupName)
-{
-    var request = new CreateConsumerRequest
-    {
-        AutoCommitEnabled = true,
-        InstanceId = instanceId,
-        MessageFormat = MessageFormat.Avro
-    };
-
-    return await client.CreateConsumerAsync(consumerGroupName, request);
-}
-
-public static ConsumerInstance ConsumerInstance(
-    IConfluentClient client,
-    string instanceId,
-    string consumerGroupName)
-{
-    var consumerInstanceTask = Setup.CreateConsumerInstance(client, instanceId, consumerGroupName).Result;
-
-    if (!consumerInstanceTask.IsSuccess())
-    {
-        throw new ApplicationException("Error " + consumerInstanceTask.Error.ErrorCode + ": " + consumerInstanceTask.Error.Message);
-    }
-    return consumerInstanceTask.Payload;
-}
-```
-
 # Create an RX Observable
 
 Once you have a client and a consumerInstance, you can subscribe to a topic.  The observable operates as a non-blocking infinte loop, waking up the thread every so often to poll the API.  You can specify the `interval` as a TimeSpan.
@@ -139,6 +80,67 @@ curl -i -X POST -H "Content-Type: application/vnd.kafka.avro.v1+json" --data '{ 
 The observable can be unit tested using the `TestScheduler` from the  [`Microsoft.Reactive.Testing`](https://www.nuget.org/packages/Rx-Testing/) library.  In production we would schedule the API calls using `ThreadPoolScheduler.Instance`, but we can simulate clock ticks using the `TestScheduler`.
 
 [RxConsumerTests.cs](https://github.com/mikebridge/Kafka.Rx.NET/blob/master/Kafka.Rx.NET.Tests/RxConsumerTests.cs) makes use of `TestScheduler.AdvanceBy(...)` to simulate the passage of time, and to keep our unit tests quick and deterministic.
+
+
+## Use Confluent.RestClient to create a Client & Consumer
+
+To connect via the Confluent.RestClient , you have to create an [`IConfluentClient`](https://github.com/josephjeganathan/Confluent.RestClient/blob/master/src/Confluent.RestClient/IConfluentClient.cs), then use that client to request a [`ConsumerInstance`](https://github.com/josephjeganathan/Confluent.RestClient/blob/master/src/Confluent.RestClient/Model/ConsumerInstance.cs).  (The confluent [REST API documentation](http://confluent.io/docs/current/kafka-rest/docs/index.html) has some more information on creating a client and consumer.)  An example of creating a client:
+
+```C#
+public class KafkaClientSettings : IConfluentClientSettings
+{
+    public string KafkaBaseUrl { get; set; }
+}
+
+public static IConfluentClient CreateConfluentClient(String baseUrl)
+{
+    var settings = new KafkaClientSettings
+    {
+        KafkaBaseUrl = baseUrl
+    };
+    return new ConfluentClient(settings);
+}
+
+///...
+var client = CreateConfluentClient("http://192.168.1.2:8082");
+
+```
+
+The client can then be used to create a ConsumerInstance via a CreateConsumerRequest.  The creation request can specify a Consumer Group, and an Instance Id within that group.  Each Consumer group will receive a copy of every message, but only one Instance within each group will process that message [Ref](http://kafka.apache.org/documentation.html#intro_consumers).
+
+A consumer instance can be created like this:
+
+```C#
+public static async Task<ConfluentResponse<ConsumerInstance>> CreateConsumerInstance(
+    IConfluentClient client,
+    string instanceId,
+    string consumerGroupName)
+{
+    var request = new CreateConsumerRequest
+    {
+        AutoCommitEnabled = true,
+        InstanceId = instanceId,
+        MessageFormat = MessageFormat.Avro
+    };
+
+    return await client.CreateConsumerAsync(consumerGroupName, request);
+}
+
+public static ConsumerInstance ConsumerInstance(
+    IConfluentClient client,
+    string instanceId,
+    string consumerGroupName)
+{
+    var consumerInstanceTask = Setup.CreateConsumerInstance(client, instanceId, consumerGroupName).Result;
+
+    if (!consumerInstanceTask.IsSuccess())
+    {
+        throw new ApplicationException("Error " + consumerInstanceTask.Error.ErrorCode + ": " + consumerInstanceTask.Error.Message);
+    }
+    return consumerInstanceTask.Payload;
+}
+```
+
 
 ## TODO
 
