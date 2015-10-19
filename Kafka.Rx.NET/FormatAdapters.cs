@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Confluent.RestClient;
 using Confluent.RestClient.Model;
+using Newtonsoft.Json;
 
 namespace Kafka.Rx.NET
 {
@@ -20,10 +21,8 @@ namespace Kafka.Rx.NET
             IConfluentClient confluentClient,
             ConsumerInstance consumerInstance,
             string topic) where TK : class where TV : class
-
         {
-            //exceptionTask.ContinueWith(result => Console.WriteLine("Faulted ..."), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.AttachedToParent);
-            //exceptionTask.ContinueWith(result => Console.WriteLine("Success ..."), TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.AttachedToParent);
+            // TODO: Check for IsSuccess() from client
             return await confluentClient.ConsumeAsAvroAsync<TK, TV>(consumerInstance, topic)
                 .ContinueWith(task =>
                     new Success<IEnumerable<Record<TK, TV>>>(task.Result.Payload.Select(
@@ -34,6 +33,30 @@ namespace Kafka.Rx.NET
                     TaskContinuationOptions.OnlyOnFaulted);
             
         }
+
+        public static async Task<Try<IEnumerable<Record<TK, TV>>>> ConsumeOnceAsBinaryAsync<TK, TV>(
+            IConfluentClient confluentClient,
+            ConsumerInstance consumerInstance,
+            string topic)
+            where TK : class
+            where TV : class
+        {
+            return await confluentClient.ConsumeAsBinaryAsync(consumerInstance, topic)
+                .ContinueWith(task =>
+                    new Success<IEnumerable<Record<TK, TV>>>(task.Result.Payload.Select(
+                        record => (new Record<TK, TV>(null, FromJson<TV>(record.Value))))),
+                    TaskContinuationOptions.OnlyOnRanToCompletion)
+                .ContinueWith(task =>
+                    new Failure<IEnumerable<Record<TK, TV>>>(task.Exception),
+                    TaskContinuationOptions.OnlyOnFaulted);
+
+        }
+
+        private static T FromJson<T>(String json)
+        {
+           throw new ApplicationException();
+        }
+
 //
 //        public static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsJsonAsync<TK, TV>(
 //            IConfluentClient confluentClient,
