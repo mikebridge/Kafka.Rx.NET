@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Confluent.RestClient;
@@ -73,6 +74,7 @@ namespace Kafka.Rx.NET.Tests
 
         }
 
+
         [Test]
         public void It_Should_Process_An_Exception_As_An_Error()
         {
@@ -98,20 +100,27 @@ namespace Kafka.Rx.NET.Tests
 
         }
 
-        private Func<IConfluentClient, ConsumerInstance, string, Task<ConfluentResponse<List<AvroMessage<string, LogMessage>>>>> MockExceptionTask(string testException)
+        private Func<IConfluentClient, ConsumerInstance, string, Task<Try<IEnumerable<Record<string, LogMessage>>>>>
+            MockExceptionTask(string testException)
         {
             return (_1, _2, _3) => { throw new Exception(testException); };
         }
 
 
+//        private Func<IConfluentClient, ConsumerInstance, string, Task<ConfluentResponse<List<AvroMessage<string, LogMessage>>>>> MockExceptionTask(string testException)
+//        {
+//            return (_1, _2, _3) => { throw new Exception(testException); };
+//        }
+
         private IDisposable CreateSubscription(
             TestScheduler scheduler, 
-            Func<IConfluentClient, ConsumerInstance, string, Task<ConfluentResponse<List<AvroMessage<string, LogMessage>>>>> getPayload,
+            Func<IConfluentClient, ConsumerInstance, string, Task<Try<IEnumerable<Record<string, LogMessage>>>>> getPayload,
             Action<LogMessage> onSuccess,
             Action<Exception> onException)
         {
             var consumer = new RxConsumer<String, LogMessage>(new Mock<IConfluentClient>().Object, new ConsumerInstance(), "testStream");
             var observable = consumer.GetRecordStream(
+                //FormatAdapters.ConsumeOnceAsAvroAsync<String,LogMessage>,
                 getPayload, 
                 TimeSpan.FromTicks(TestSchedulerTickInterval), 
                 scheduler,
@@ -135,8 +144,8 @@ namespace Kafka.Rx.NET.Tests
             return subscription;
         }
 
-        private Func<IConfluentClient, ConsumerInstance, string, Task<ConfluentResponse<List<AvroMessage<string, LogMessage>>>>> MockDataTask(
-            ConfluentResponse<List<AvroMessage<string, LogMessage>>> confluentResponse)
+        private Func<IConfluentClient, ConsumerInstance, string, Task<Try<IEnumerable<Record<string, LogMessage>>>>> MockDataTask(
+            Try<IEnumerable<Record<string, LogMessage>>> confluentResponse)
         {
             return (_1, _2, _3) => Task.FromResult(confluentResponse);
         }
@@ -146,27 +155,43 @@ namespace Kafka.Rx.NET.Tests
             return _offset ++;
         }
 
-        private ConfluentResponse<List<AvroMessage<string, LogMessage>>> CreateErrorMessage(int errorCode, string testError)
+        private Try<IEnumerable<Record<string, LogMessage>>> CreateErrorMessage(int i, string testError)
         {
-            return ConfluentResponse<List<AvroMessage<string, LogMessage>>>.Failed(new Error { ErrorCode = errorCode, Message = testError });
+            return new Failure<IEnumerable<Record<string, LogMessage>>>(new Exception("Test Error"));
         }
 
-        private ConfluentResponse<List<AvroMessage<string, LogMessage>>> CreateTestRecords(int responseCount)
+//        private ConfluentResponse<List<AvroMessage<string, LogMessage>>> CreateErrorMessage(int errorCode, string testError)
+//        {
+//            return ConfluentResponse<List<AvroMessage<string, LogMessage>>>.Failed(new Error { ErrorCode = errorCode, Message = testError });
+//        }
+
+        private Try<IEnumerable<Record<string, LogMessage>>> CreateTestRecords(int responseCount)
         {
+
             // Arrange
             var payload = Enumerable.Range(0, responseCount)
-                                    .Select(_ => CreateResult())
-                                    .ToList();
-            return ConfluentResponse<List<AvroMessage<string, LogMessage>>>.Success(payload);
+                .Select(_ => CreateResult());
+            return new Success<IEnumerable<Record<string, LogMessage>>> (payload);
         }
 
-        private AvroMessage<string, LogMessage> CreateResult()
+//        private ConfluentResponse<List<AvroMessage<string, LogMessage>>> CreateTestRecords(int responseCount)
+//        {
+//            // Arrange
+//            var payload = Enumerable.Range(0, responseCount)
+//                                    .Select(_ => CreateResult())
+//                                    .ToList();
+//            return ConfluentResponse<List<AvroMessage<string, LogMessage>>>.Success(payload);
+//        }
+
+        private Record<string, LogMessage> CreateResult()
         {
             long offset = GetOffset();
-            return new AvroMessage<string, LogMessage>
-            {
-                Key = "thekey", Offset = offset, Partition = 0, Value = new LogMessage { Message = "Test #" + offset }
-            };
+            return new Record<string, LogMessage>(key: "thekey", value: new LogMessage {Message = "Test #" + offset});
+            //long offset = GetOffset();
+//            return new Record<string, LogMessage>(key: "thekey"
+//            {
+//                Key = "thekey", Offset = offset, Partition = 0, Value = new LogMessage { Message = "Test #" + offset }
+//            };
         }
 
 

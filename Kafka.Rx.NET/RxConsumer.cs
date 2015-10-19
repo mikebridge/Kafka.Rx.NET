@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -27,21 +28,6 @@ namespace Kafka.Rx.NET
             _consumerInstance = consumerInstance;
             _topic = topic;
         }
-       
-        /// <summary>
-        /// This assumes that a topic has only one type.  Jay Kreps recommends separating different event types 
-        /// into different topics at http://www.confluent.io/blog/stream-data-platform-2/.  Besides, heterogeneous-event 
-        /// topics aren't directly supported by the driver.
-        /// </summary>
-        /// <returns></returns>
-        private static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsync(
-            IConfluentClient confluentClient,
-            ConsumerInstance consumerInstance,
-            string topic)
- 
-        {
-            return await confluentClient.ConsumeAsAvroAsync<TK, TV>(consumerInstance, topic);
-        }
 
         /// <summary>
         /// Convert the set of records into an IObservable stream of individual
@@ -57,13 +43,13 @@ namespace Kafka.Rx.NET
             Action beforeCallAction = null
             )
         {
-            return GetRecordStream(ConsumeOnceAsync, interval, scheduler, beforeCallAction);
+            return GetRecordStream(FormatAdapters.ConsumeOnceAsAvroAsync<TK, TV>, interval, scheduler, beforeCallAction);
         }
 
 
 
         public IObservable<Try<Record<TK, TV>>> GetRecordStream(
-            Func<IConfluentClient, ConsumerInstance, String, Task<ConfluentResponse<List<AvroMessage<TK, TV>>>>> consumerAction,
+            Func<IConfluentClient, ConsumerInstance, String, Task<Try<IEnumerable<Record<TK, TV>>>>> consumerAction,
             TimeSpan interval,
             IScheduler scheduler,
             Action beforeCallAction = null)
@@ -79,8 +65,22 @@ namespace Kafka.Rx.NET
                         beforeCallAction();
                         try
                         {
-                            SendResultToObserver(await consumerAction(_client, _consumerInstance, _topic), observer);
-                            
+                          var result = await consumerAction(_client, _consumerInstance, _topic);
+                            if (result.IsSuccess)
+                            {
+                                // flatten the result
+                                foreach (var record in result.Value.ToList())
+                                {
+                                    Console.WriteLine("Sending "+record.Value+" to observer");
+                                    observer.OnNext(new Success<Record<TK, TV>>(record));
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Got an error: " + result.Exception.Message);
+                                observer.OnNext(new Failure<Record<TK, TV>>(result.Exception));
+
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -97,36 +97,11 @@ namespace Kafka.Rx.NET
             });
         }
 
-        private static void SendExceptionToObserver<TK, TV>(
+        private static void SendExceptionToObserver(
             Exception ex,
             IObserver<Try<Record<TK, TV>>> observer)
-            where TK : class
-            where TV : class
         {
             observer.OnNext(new Failure<Record<TK, TV>>(ex));
-        }
-
-        private static void SendResultToObserver<TK, TV>(
-            ConfluentResponse<List<AvroMessage<TK, TV>>> result, 
-            IObserver<Try<Record<TK, TV>>> observer) 
-            where TK : class
-            where TV : class
-        {
-            if (result.IsSuccess())
-            {
-                // flatten the result
-                foreach (var record in result.Payload)
-                {
-                    Console.WriteLine("Sending "+record.Value+" to observer");
-                    observer.OnNext(new Success<Record<TK, TV>>(new Record<TK, TV>(record.Key, record.Value)));
-                }
-            }
-            else
-            {
-                Console.WriteLine("Got an error: " + result.Error.Message);
-                observer.OnNext(new Failure<Record<TK, TV>>(
-                        new Exception(result.Error.ErrorCode + ": " + result.Error.Message)));
-            }
         }
     }
 }
