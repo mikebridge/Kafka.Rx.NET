@@ -33,7 +33,7 @@ namespace Kafka.Rx.NET
         {
             var settings = new KafkaClientSettings
             {
-                KafkaBaseUrl = baseUrl
+                KafkaBaseUrl = baseUrl,
             };
             IConfluentClient client = new ConfluentClient(settings);
             return client;

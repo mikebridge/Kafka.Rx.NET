@@ -71,13 +71,13 @@ namespace Kafka.Rx.NET
                                 // flatten the result
                                 foreach (var record in result.Value.ToList())
                                 {
-                                    Console.WriteLine("Sending "+record.Value+" to observer");
+                                    //Console.WriteLine("Sending "+record.Value+" to observer");
                                     observer.OnNext(new Success<Record<TK, TV>>(record));
                                 }
                             }
                             else
                             {
-                                Console.WriteLine("Got an error: " + result.Exception.Message);
+                                //Console.WriteLine("Got an error: " + result.Exception.Message);
                                 observer.OnNext(new Failure<Record<TK, TV>>(result.Exception));
 
                             }
@@ -86,7 +86,7 @@ namespace Kafka.Rx.NET
                         {
                             // TODO: Write this to the observer via Try,
                             // but differentiate between fatal and non-fatal messages.
-                            Console.WriteLine("EXCEPTION: " + ex.Message);
+                            //Console.WriteLine("EXCEPTION: " + ex.Message);
                             SendExceptionToObserver(ex, observer);
                         }
                         await scheduler.Sleep(interval, cancellationToken);
