@@ -43,7 +43,7 @@ namespace Kafka.Rx.NET
             Action beforeCallAction = null
             )
         {
-            return GetRecordStream(FormatAdapters.ConsumeOnceAsAvroAsync<TK, TV>, interval, scheduler, beforeCallAction);
+            return GetRecordStream(FormatAdapters.ConsumeOnceAsAvroAsync<TK,TV>, interval, scheduler, beforeCallAction);
         }
 
 

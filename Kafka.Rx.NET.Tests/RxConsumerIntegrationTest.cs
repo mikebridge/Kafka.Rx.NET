@@ -2,7 +2,6 @@
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading;
-using Confluent.RestClient;
 using Confluent.RestClient.Model;
 using NUnit.Framework;
 

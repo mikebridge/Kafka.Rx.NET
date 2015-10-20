@@ -54,20 +54,8 @@ namespace Kafka.Rx.NET
 
         private static T FromJson<T>(String json)
         {
-           throw new ApplicationException();
+            return JsonConvert.DeserializeObject<T>(json);
         }
 
-//
-//        public static async Task<ConfluentResponse<List<AvroMessage<TK, TV>>>> ConsumeOnceAsJsonAsync<TK, TV>(
-//            IConfluentClient confluentClient,
-//            ConsumerInstance consumerInstance,
-//            string topic)
-//            where TK : class
-//            where TV : class
-//        {
-//            var result = await confluentClient.ConsumeAsBinaryAsync<TK, TV>(consumerInstance, topic);
-//            result.Payload[0]
-//            return result;
-//        }
     }
 }
