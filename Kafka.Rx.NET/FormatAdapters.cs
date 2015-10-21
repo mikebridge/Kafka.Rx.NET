@@ -22,40 +22,55 @@ namespace Kafka.Rx.NET
             ConsumerInstance consumerInstance,
             string topic) where TK : class where TV : class
         {
-            // TODO: Check for IsSuccess() from client
-            return await confluentClient.ConsumeAsAvroAsync<TK, TV>(consumerInstance, topic)
-                .ContinueWith(task =>
-                    new Success<IEnumerable<Record<TK, TV>>>(task.Result.Payload.Select(
-                        record => (new Record<TK, TV>(record.Key, record.Value)))),
-                    TaskContinuationOptions.OnlyOnRanToCompletion)
-                .ContinueWith(task =>
-                    new Failure<IEnumerable<Record<TK, TV>>>(task.Exception),
-                    TaskContinuationOptions.OnlyOnFaulted);
-            
+            try
+            {
+                var result = await confluentClient.ConsumeAsAvroAsync<TK, TV>(consumerInstance, topic);
+                if (result.IsSuccess())
+                {
+                    return new Success<IEnumerable<Record<TK, TV>>>(result.Payload.Select(
+                        record => (new Record<TK, TV>(record.Key, record.Value))));
+                }
+                else
+                {
+                    return new Failure<IEnumerable<Record<TK, TV>>>(
+                            new Exception(result.Error.ErrorCode + ": " + result.Error.Message));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Failure<IEnumerable<Record<TK, TV>>>(ex);
+
+            }
+
         }
 
         public static async Task<Try<IEnumerable<Record<TK, TV>>>> ConsumeOnceAsBinaryAsync<TK, TV>(
-            IConfluentClient confluentClient,
-            ConsumerInstance consumerInstance,
-            string topic)
+                    IConfluentClient confluentClient,
+                    ConsumerInstance consumerInstance,
+                    string topic)
             where TK : class
             where TV : class
         {
-            return await confluentClient.ConsumeAsBinaryAsync(consumerInstance, topic)
-                .ContinueWith(task =>
-                    new Success<IEnumerable<Record<TK, TV>>>(task.Result.Payload.Select(
-                        record => (new Record<TK, TV>(null, FromJson<TV>(record.Value))))),
-                    TaskContinuationOptions.OnlyOnRanToCompletion)
-                .ContinueWith(task =>
-                    new Failure<IEnumerable<Record<TK, TV>>>(task.Exception),
-                    TaskContinuationOptions.OnlyOnFaulted);
+            try
+            {
+                var result = await confluentClient.ConsumeAsBinaryAsync(consumerInstance, topic /*, maxBytes: 10000*/);
+                if (result.IsSuccess())
+                {
+                    return new Success<IEnumerable<Record<TK, TV>>>(
+                        result.Payload.Select(
+                            record => (new Record<TK, TV>(null, BinaryConverters.FromBinaryJson<TV>(record.Value)))));
+                }
+                else
+                {
+                    return new Failure<IEnumerable<Record<TK, TV>>>(
+                        new Exception(result.Error.ErrorCode + ": " + result.Error.Message));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Failure<IEnumerable<Record<TK, TV>>>(ex);
 
+            }
         }
-
-        private static T FromJson<T>(String json)
-        {
-            return JsonConvert.DeserializeObject<T>(json);
-        }
-
     }
 }

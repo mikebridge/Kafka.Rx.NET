@@ -1,23 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Diagnostics;
-using System.Linq;
 using System.Reactive.Concurrency;
-using System.Reactive.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+
 using Confluent.RestClient.Model;
 
 namespace Kafka.Rx.NET.Console
 {
     public class Program
     {
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+        private delegate bool EventHandler(CtrlType sig);
+
+        static EventHandler _handler;
+        static IDisposable _observable;
         private static long _iterations = 0L;
 
         static void Main(string[] args)
         {
+            _handler += Handler;
+            SetConsoleCtrlHandler(_handler, true);
+
             var options = new Options();
 
             if (CommandLine.Parser.Default.ParseArguments(args, options))
@@ -59,7 +62,7 @@ namespace Kafka.Rx.NET.Console
                     var consumer = new RxConsumer<String, LogMessage>(client, consumerInstance, topic);
 
                     // Act
-                    var observable = consumer.GetRecordStream(
+                    _observable = consumer.GetRecordStream(
                             TimeSpan.FromMilliseconds(options.Sleep), 
                             ThreadPoolScheduler.Instance, 
                             beforeCallAction: () => Log("."))
@@ -85,7 +88,7 @@ namespace Kafka.Rx.NET.Console
 
                     System.Console.ReadLine();
                     System.Console.WriteLine("Disposing observer");
-                    observable.Dispose();
+                    _observable.Dispose();
                 }
                 catch (Exception ex)
                 {
@@ -106,6 +109,34 @@ namespace Kafka.Rx.NET.Console
                 }
             }
         }
+        #region Catch Break.
+        private static bool Handler(CtrlType sig)
+        {
+            Log("Exiting...\r\n");
+            if (_observable != null)
+            {
+                _observable.Dispose();
+            }
+            return true;
+            //            switch (sig)
+            //            {
+            //                case CtrlType.CTRL_C_EVENT:
+            //                case CtrlType.CTRL_LOGOFF_EVENT:
+            //                case CtrlType.CTRL_SHUTDOWN_EVENT:
+            //                case CtrlType.CTRL_CLOSE_EVENT:
+            //                default:
+            //                    return false;
+            //            }
+        }
 
+        enum CtrlType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
+        #endregion
     }
 }
